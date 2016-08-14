@@ -11,7 +11,7 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
-import fi.holti.converter.entity.ODSMonthlySheet;
+import fi.holti.converter.entity.MonthlyFinancialSerie;
 import fi.holti.converter.parser.ODSFileSheetParser;
 
 /**
@@ -21,7 +21,7 @@ import fi.holti.converter.parser.ODSFileSheetParser;
  * @author Timo
  *
  */
-public class ODSReader implements ItemReader<ODSMonthlySheet> {
+public class ODSReader implements ItemReader<MonthlyFinancialSerie> {
 	private File file;
 	// TODO: extract hardcoding.
 	private String fileName = "D:/spreadsheet_test.ods";
@@ -30,7 +30,7 @@ public class ODSReader implements ItemReader<ODSMonthlySheet> {
 	private int currentSheetYear = 2011;
 	private ODSFileSheetParser odsFilerParser = new ODSFileSheetParser();
 
-	public ODSMonthlySheet read()
+	public MonthlyFinancialSerie read()
 			throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 
 		openFile();
@@ -38,9 +38,13 @@ public class ODSReader implements ItemReader<ODSMonthlySheet> {
 		String name = parseSheetName();
 
 		Sheet sheet = SpreadSheet.createFromFile(file).getSheet(name);
-		logger.debug("Loaded sheet: " + sheet.getName());
-
-		ODSMonthlySheet monthlySheet = odsFilerParser.parseSheet(sheet);
+		if (sheet == null) {
+			logger.info("Last sheet processed, returning null");
+			return null;
+		} else {
+			logger.debug("Loaded sheet: " + sheet.getName());
+		}
+		MonthlyFinancialSerie monthlySheet = odsFilerParser.parseSheet(sheet);
 
 		monthlySheet.setSheetName(name);
 		if (currentSheetMonth < 12) {

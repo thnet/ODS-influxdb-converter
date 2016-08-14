@@ -11,7 +11,7 @@ import lombok.ToString;
 
 @ToString(includeFieldNames = true)
 @Getter@Setter
-public class ODSMonthlySheetDailyRow {
+public class DailyFinancialSerie {
 	private Date date;
 	private Map<String, BigDecimal> expensesByCategory = new LinkedHashMap<String, BigDecimal>();
 	private BigDecimal income;

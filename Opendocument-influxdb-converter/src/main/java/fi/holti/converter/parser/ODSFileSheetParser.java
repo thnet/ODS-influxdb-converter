@@ -10,8 +10,8 @@ import org.jopendocument.dom.spreadsheet.Sheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import fi.holti.converter.entity.ODSMonthlySheet;
-import fi.holti.converter.entity.ODSMonthlySheetDailyRow;
+import fi.holti.converter.entity.DailyFinancialSerie;
+import fi.holti.converter.entity.MonthlyFinancialSerie;
 
 /**
  * Parses one sheet from ODS file.
@@ -26,7 +26,7 @@ public class ODSFileSheetParser {
 	public Logger logger = LoggerFactory.getLogger(ODSFileSheetParser.class);
 	private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
-	public ODSMonthlySheet parseSheet(Sheet sheet) {
+	public MonthlyFinancialSerie parseSheet(Sheet sheet) {
 		Map<Integer, String> categoriesByColumnNumber = new TreeMap<Integer, String>();
 
 		int currentRow = getFirstDataRow(sheet);
@@ -38,21 +38,34 @@ public class ODSFileSheetParser {
 		int firstDataRow = 3;
 		currentRow = firstDataRow;
 
-		ODSMonthlySheet monthlySheet = new ODSMonthlySheet();
+		MonthlyFinancialSerie monthlySheet = new MonthlyFinancialSerie();
 
 		while (currentRow < LAST_DATA_ROW) {
 			Integer dataColumn = 1;
-			ODSMonthlySheetDailyRow dailyRow = new ODSMonthlySheetDailyRow();
+			DailyFinancialSerie dailyRow = new DailyFinancialSerie();
 
-			parseDailyCategoryValues(categoriesByColumnNumber, sheet, currentRow, dataColumn, dailyRow);
-			parseIncomeValues(sheet, currentRow, dailyRow);
-			monthlySheet.getRows().add(dailyRow);
+			if (isNotNullRow(sheet, currentRow)) {
+				parseDailyCategoryValues(categoriesByColumnNumber, sheet, currentRow, dataColumn, dailyRow);
+				parseIncomeValues(sheet, currentRow, dailyRow);
+				monthlySheet.getRows().add(dailyRow);
+			}
 			currentRow++;
 		}
 		return monthlySheet;
 	}
 
-	private void parseIncomeValues(Sheet sheet, int currentRow, ODSMonthlySheetDailyRow dailyRow) {
+	private boolean isNotNullRow(Sheet sheet, int currentRow) {
+		String timestamp = getCellValue(sheet, currentRow, 1);
+		try {
+			simpleDateFormat.parse(timestamp);
+			return true;
+		} catch (java.text.ParseException e) {
+			logger.debug("Reached last timestamp row, returning. Row=" + currentRow);
+			return false;
+		}
+	}
+
+	private void parseIncomeValues(Sheet sheet, int currentRow, DailyFinancialSerie dailyRow) {
 		String text = sheet.getCellAt(incomeColumn, currentRow).getTextValue();
 		if (hasValues(text)) {
 			BigDecimal incomeValue = parseBigdecimal(text);
@@ -83,22 +96,20 @@ public class ODSFileSheetParser {
 	}
 
 	private void parseDailyCategoryValues(Map<Integer, String> categoriesByColumnNumber, Sheet sheet, int currentRow,
-			Integer dataColumn, ODSMonthlySheetDailyRow dailyRow) {
+			Integer dataColumn, DailyFinancialSerie dailyRow) {
 
-		for (int i = dataColumn; dataColumn < categoriesByColumnNumber.size(); i++) {
+		for (int i = dataColumn; dataColumn <= categoriesByColumnNumber.size(); i++) {
 
 			if (i == 1) {
 				String timestamp = getCellValue(sheet, currentRow, i);
 				Date date = null;
 				try {
-
 					date = simpleDateFormat.parse(timestamp);
 				} catch (java.text.ParseException e) {
-					logger.debug("Reached last timestamp row, returning. Row=" + currentRow + " dataColum=" + i);
+					logger.debug("Exception in parsing timestamp. Row=" + currentRow + " dataColum=" + i);
 					return;
 				}
 				dailyRow.setDate(date);
-				i++;
 			} else {
 				String value = "";
 				try {

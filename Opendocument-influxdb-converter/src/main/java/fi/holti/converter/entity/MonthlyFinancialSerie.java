@@ -18,9 +18,9 @@ import lombok.ToString;
  */
 @ToString
 @Getter@Setter
-public class ODSMonthlySheet {
+public class MonthlyFinancialSerie {
 	private String sheetName;
-	private Collection<ODSMonthlySheetDailyRow> rows = new ArrayList<ODSMonthlySheetDailyRow>();
+	private Collection<DailyFinancialSerie> rows = new ArrayList<DailyFinancialSerie>();
 	private BigDecimal monthlyIncome;
 	private BigDecimal montlyExpenses;
 	private BigDecimal monthlyProfit;

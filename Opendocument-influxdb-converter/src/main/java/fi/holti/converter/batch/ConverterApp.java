@@ -1,12 +1,13 @@
 package fi.holti.converter.batch;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import fi.holti.converter.batch.spring.BatchConfiguration;
-
+@SpringBootApplication
 public class ConverterApp {
-	  public static void main(String [] args) {
-		    System.exit(SpringApplication.exit(SpringApplication.run(
-		        BatchConfiguration.class, args)));
-		  }
+
+	public static void main(String[] args) throws Exception {
+		SpringApplication.run(ConverterApp.class, args);
+	}
+
 }
